@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/logs"
+        android:icon="@drawable/baseline_format_list_bulleted_24"
+        android:title="LOGS"/>
+    <item
+        android:id="@+id/dashboard"
+        android:icon="@drawable/baseline_stacked_line_chart_24"
+        android:title="DASHBOARD"/>
+
+</menu>
