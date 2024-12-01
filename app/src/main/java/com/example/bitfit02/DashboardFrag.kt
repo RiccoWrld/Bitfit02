@@ -74,16 +74,22 @@ class DashboardFrag (application: Application) : Fragment() {
         var total: Int = 0
         var min: Int = Integer.MAX_VALUE
         var max: Int = Integer.MIN_VALUE
+
         for (food in foods) {
-            val i = Integer.parseInt(food.calories)
-            total += i
-            if (i < min) {
-                min = i
-            }
-            if(i > max) {
-                max = i
+            try {
+                val i = Integer.parseInt(food.calories)
+                total += i
+                if (i < min) {
+                    min = i
+                }
+                if(i > max) {
+                    max = i
+                }
+            } catch (e: NumberFormatException) {
+                println("Error parsing calories for food: ${food.calories}. Skipping this item.")
             }
         }
+
         avg_cal_val.text = (total/ foods.size).toString()
         max_cal_val.text = max.toString()
         min_cal_val.text = min.toString()
