@@ -2,6 +2,7 @@ package com.example.bitfit02
 
 import android.app.Application
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,18 +12,16 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-class DashboardFrag (application: Application) : Fragment() {
+class DashboardFrag(application: Application) : Fragment() {
 
+    // Remove redundant 'application' declaration as it's already passed in the constructor
     private lateinit var avg_cal_val: TextView
     private lateinit var max_cal_val: TextView
     private lateinit var min_cal_val: TextView
     private lateinit var clearDataBTN: Button
-    private lateinit var application: Application
-
-    init {
-        this@DashboardFrag.application = application
-    }
+    private val application: Application = application
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -32,11 +31,13 @@ class DashboardFrag (application: Application) : Fragment() {
 
         val view = inflater.inflate(R.layout.frag_dashboard, container, false)
 
+        // Initialize UI components
         avg_cal_val = view.findViewById(R.id.avg_cal_val)
         max_cal_val = view.findViewById(R.id.max_cal_val)
         min_cal_val = view.findViewById(R.id.min_cal_val)
         clearDataBTN = view.findViewById(R.id.clear_dataBtn)
 
+        // Clear data when the button is clicked
         clearDataBTN.setOnClickListener {
             lifecycleScope.launch(Dispatchers.IO) {
                 (application as NutritionApplication).db.nutritionDao().deleteAll()
@@ -44,29 +45,33 @@ class DashboardFrag (application: Application) : Fragment() {
             reset()
         }
 
+        // Fetch data from the database in the background thread
         lifecycleScope.launch(Dispatchers.IO) {
             (application as NutritionApplication).db.nutritionDao().getAll().collect { databaseList ->
-                databaseList.map { entity  ->
-                    Nutrition(
-                        entity.food,
-                        entity.calories
-                    )
-                }.also { mappedList ->
+                val mappedList = databaseList.map { entity ->
+                    Nutrition(entity.food, entity.calories)
+                }
+
+                // Update the UI on the main thread
+                withContext(Dispatchers.Main) {
                     update(mappedList)
                 }
             }
         }
+
         return view
     }
 
-    fun reset() {
+    // Reset the displayed values
+    private fun reset() {
         avg_cal_val.text = "____"
         max_cal_val.text = "____"
         min_cal_val.text = "____"
     }
 
+    // Update the UI with the latest data
     fun update(foods: List<Nutrition>) {
-        if(foods.isEmpty()) {
+        if (foods.isEmpty()) {
             reset()
             return
         }
@@ -75,6 +80,7 @@ class DashboardFrag (application: Application) : Fragment() {
         var min: Int = Integer.MAX_VALUE
         var max: Int = Integer.MIN_VALUE
 
+        // Loop through the foods and calculate the total, min, and max values
         for (food in foods) {
             try {
                 val i = Integer.parseInt(food.calories)
@@ -82,15 +88,16 @@ class DashboardFrag (application: Application) : Fragment() {
                 if (i < min) {
                     min = i
                 }
-                if(i > max) {
+                if (i > max) {
                     max = i
                 }
             } catch (e: NumberFormatException) {
-                println("Error parsing calories for food: ${food.calories}. Skipping this item.")
+                Log.e("DashboardFrag", "Error parsing calories for food: ${food.calories}. Skipping this item.")
             }
         }
 
-        avg_cal_val.text = (total/ foods.size).toString()
+        // Update UI with calculated values (on the main thread)
+        avg_cal_val.text = (total / foods.size).toString()
         max_cal_val.text = max.toString()
         min_cal_val.text = min.toString()
     }

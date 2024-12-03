@@ -43,7 +43,9 @@ class MainActivity : AppCompatActivity() {
         recordFoodBtn.setOnClickListener {
             val intent = Intent(this, DetailActivity::class.java)
             this.startActivity(intent)
-            dashboardFrag.update(NutritionListFragment.foods)
+            if (dashboardFrag.isAdded) {
+                dashboardFrag.update(NutritionListFragment.foods)
+            }
         }
 
     }
